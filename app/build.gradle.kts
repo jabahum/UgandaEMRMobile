@@ -1,28 +1,61 @@
+import java.io.ByteArrayOutputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.services)
+    alias(libs.plugins.crashlytics)
+}
+
+fun getVersionCode(): Int {
+    val stdout = ByteArrayOutputStream()
+    exec {
+        commandLine("git", "rev-list", "--count", "HEAD")
+        standardOutput = stdout
+    }
+    return stdout.toString().trim().toInt()
+}
+
+fun getVersionName(): String {
+    val stdout = ByteArrayOutputStream()
+    exec {
+        commandLine("git", "describe", "--tags", "--abbrev=0")
+        standardOutput = stdout
+        isIgnoreExitValue = true
+    }
+    val tag = stdout.toString().trim()
+    return tag.ifEmpty { "0.1.0" }
 }
 
 android {
     namespace = "com.lyecdevelopers.ugandaemrmobile"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.lyecdevelopers.ugandaemrmobile"
         minSdk = 28
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = getVersionCode()
+        versionName = getVersionName()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(project.findProperty("KEYSTORE_FILE") ?: "keystore/release.jks")
+            storePassword = project.findProperty("KEYSTORE_PASSWORD") as String? ?: ""
+            keyAlias = project.findProperty("KEY_ALIAS") as String? ?: ""
+            keyPassword = project.findProperty("KEY_PASSWORD") as String? ?: ""
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -37,25 +70,30 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "2.0.20"
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
         isCoreLibraryDesugaringEnabled = true
     }
 
-    packaging { resources.excludes.addAll(listOf("META-INF/ASL-2.0.txt", "META-INF/LGPL-3.0.txt")) }
+    packaging {
+        resources.excludes.addAll(
+            listOf("META-INF/ASL-2.0.txt", "META-INF/LGPL-3.0.txt")
+        )
+    }
 
     kotlinOptions {
         jvmTarget = "11"
     }
 
-    kotlin { jvmToolchain(11) }
-
+    kotlin {
+        jvmToolchain(11)
+    }
 
     hilt {
         enableAggregatingTask = false
     }
-
 }
 
 dependencies {
@@ -79,12 +117,11 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.material.icons.extended)
     implementation(libs.splashscreen)
-
+    implementation(libs.androidx.appcompat)
 
     // fhir
     implementation(libs.android.fhir.engine)
     implementation(libs.android.fhir.sdc)
-    implementation(libs.appcompat)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     // Hilt
@@ -109,6 +146,11 @@ dependencies {
 
     // logging
     implementation(libs.timber)
+
+    // firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.google.firebase.analytics)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
