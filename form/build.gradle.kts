@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.lyecdevelopers.form"
-    compileSdk = 35
+    compileSdk = 36
 
     buildFeatures {
         buildConfig = true
@@ -44,9 +44,10 @@ android {
         isCoreLibraryDesugaringEnabled = true
 
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
+
+    packaging { resources.excludes.addAll(listOf("META-INF/ASL-2.0.txt", "META-INF/LGPL-3.0.txt")) }
+
+
 
     kotlin { jvmToolchain(11) }
 
@@ -54,6 +55,8 @@ android {
     hilt {
         enableAggregatingTask = false
     }
+
+
 }
 
 dependencies {
@@ -72,13 +75,13 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.material.icons.extended)
-
-
+    implementation(libs.androidx.paging.common.android)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.constraintlayout)
 
     // fhir
     implementation(libs.android.fhir.engine)
     implementation(libs.android.fhir.sdc)
-    implementation(libs.androidx.constraintlayout)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
 
@@ -100,6 +103,7 @@ dependencies {
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.room.paging)
     ksp(libs.room.compiler)
 
     // Moshi
@@ -110,6 +114,11 @@ dependencies {
 
     // logging
     implementation(libs.timber)
+
+    // firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
 
     // Optional: for previewing Composables
     implementation(libs.androidx.ui.tooling.preview)
