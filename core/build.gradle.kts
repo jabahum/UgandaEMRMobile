@@ -13,13 +13,10 @@ val localProperties = Properties().apply {
 }
 
 val apiBaseUrl = localProperties["API_BASE_URL"] as String? ?: ""
-val apiClientId = localProperties["API_CLIENT_ID"] as String? ?: ""
-val apiServerUsername = localProperties["API_SERVER_USERNAME"] as String? ?: ""
-val apiServerPassword = localProperties["API_SERVER_PASSWORD"] as String? ?: ""
 
 android {
     namespace = "com.lyecdevelopers.core"
-    compileSdk = 35
+    compileSdk = 36
 
     buildFeatures {
         buildConfig = true
@@ -35,9 +32,6 @@ android {
 
         // url config
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
-        buildConfigField("String", "API_CLIENT_ID", "\"$apiClientId\"")
-        buildConfigField("String", "API_SERVER_USERNAME", "\"$apiServerUsername\"")
-        buildConfigField("String", "API_SERVER_PASSWORD", "\"$apiServerPassword\"")
     }
 
     buildTypes {
@@ -60,12 +54,20 @@ android {
         isCoreLibraryDesugaringEnabled = true
 
     }
+
+    packaging { resources.excludes.addAll(listOf("META-INF/ASL-2.0.txt", "META-INF/LGPL-3.0.txt")) }
+
     kotlinOptions {
         jvmTarget = "11"
+        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
     }
 
     hilt {
         enableAggregatingTask = false
+    }
+
+    kotlin {
+        jvmToolchain(11)
     }
 }
 
@@ -81,15 +83,14 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.material.icons.extended)
-
+    implementation(libs.androidx.paging.common.android)
+    implementation(libs.androidx.appcompat)
 
     // fhir
     implementation(libs.android.fhir.engine)
     implementation(libs.android.fhir.sdc)
     implementation(libs.androidx.constraintlayout)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
-
-
 
     // Hilt
     implementation(libs.hilt.android)
@@ -104,6 +105,7 @@ dependencies {
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.room.paging)
     ksp(libs.room.compiler)
 
     // Moshi
@@ -120,6 +122,11 @@ dependencies {
 
     // logging
     implementation(libs.timber)
+
+    // firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
 
 
     // Optional: for previewing Composables

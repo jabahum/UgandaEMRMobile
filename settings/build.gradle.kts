@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.lyecdevelopers.settings"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 28
@@ -38,8 +38,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        jvmToolchain(11)
     }
 
     hilt {
@@ -58,6 +58,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.material.icons.extended)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.constraintlayout)
 
 
     // Hilt
@@ -82,6 +84,11 @@ dependencies {
 
     // logging
     implementation(libs.timber)
+
+    // firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
 
     // Optional: for previewing Composables
     implementation(libs.androidx.ui.tooling.preview)

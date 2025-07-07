@@ -1,28 +1,78 @@
+import java.io.ByteArrayOutputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.services)
+    alias(libs.plugins.crashlytics)
+}
+
+fun getVersionCode(): Int {
+    val stdout = ByteArrayOutputStream()
+    exec {
+        commandLine("git", "rev-list", "--count", "HEAD")
+        standardOutput = stdout
+    }
+    return stdout.toString().trim().toInt()
+}
+
+fun getVersionName(): String {
+    val stdout = ByteArrayOutputStream()
+    exec {
+        commandLine("git", "describe", "--tags", "--abbrev=0")
+        standardOutput = stdout
+        isIgnoreExitValue = true
+    }
+    val tag = stdout.toString().trim()
+    return tag.ifEmpty { "0.1.0" }
+}
+
+val localProperties = Properties().apply {
+    load(project.rootProject.file("local.properties").inputStream())
 }
 
 android {
     namespace = "com.lyecdevelopers.ugandaemrmobile"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.lyecdevelopers.ugandaemrmobile"
         minSdk = 28
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = getVersionCode()
+        versionName = getVersionName()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = localProperties.getProperty("KEYSTORE_FILE") ?: ""
+            val storePasswordProp = localProperties.getProperty("KEYSTORE_PASSWORD") ?: ""
+            val keyAliasProp = localProperties.getProperty("KEY_ALIAS") ?: ""
+            val keyPasswordProp = localProperties.getProperty("KEY_PASSWORD") ?: ""
+
+            println("🔑 [Signing] Using keystore at: $storeFilePath")
+
+            if (storeFilePath.isNotBlank()) {
+                storeFile = rootProject.file(storeFilePath)
+                storePassword = storePasswordProp
+                keyAlias = keyAliasProp
+                keyPassword = keyPasswordProp
+            } else {
+                println("⚠️  Skipping release signing config because keystore path is missing.")
+            }
+        }
+    }
+
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -37,25 +87,33 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "2.0.20"
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
         isCoreLibraryDesugaringEnabled = true
     }
 
-    packaging { resources.excludes.addAll(listOf("META-INF/ASL-2.0.txt", "META-INF/LGPL-3.0.txt")) }
-
-    kotlinOptions {
-        jvmTarget = "11"
+    packaging {
+        resources.excludes.addAll(
+            listOf("META-INF/ASL-2.0.txt", "META-INF/LGPL-3.0.txt")
+        )
     }
 
-    kotlin { jvmToolchain(11) }
 
+    kotlin {
+        jvmToolchain(11)
+    }
 
     hilt {
         enableAggregatingTask = false
     }
 
+    configurations.all {
+        resolutionStrategy {
+            force("com.google.guava:guava:32.1.3-android")
+        }
+    }
 }
 
 dependencies {
@@ -79,12 +137,11 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.material.icons.extended)
     implementation(libs.splashscreen)
-
+    implementation(libs.androidx.appcompat)
 
     // fhir
     implementation(libs.android.fhir.engine)
     implementation(libs.android.fhir.sdc)
-    implementation(libs.appcompat)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     // Hilt
@@ -109,6 +166,17 @@ dependencies {
 
     // logging
     implementation(libs.timber)
+
+    // firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
+
+
+    // work
+    implementation(libs.hilt.work)
+    implementation(libs.hilt.work.compiler)
+    implementation(libs.work.runtime.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

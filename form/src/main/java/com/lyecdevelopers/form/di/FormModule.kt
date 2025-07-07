@@ -3,11 +3,18 @@ package com.lyecdevelopers.form.di
 import android.content.Context
 import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.FhirEngineProvider
+import com.lyecdevelopers.core.data.local.dao.EncounterDao
 import com.lyecdevelopers.core.data.local.dao.FormDao
+import com.lyecdevelopers.core.data.local.dao.PatientDao
+import com.lyecdevelopers.core.data.local.dao.VisitDao
+import com.lyecdevelopers.core.data.local.dao.VitalsDao
 import com.lyecdevelopers.core.data.remote.FormApi
 import com.lyecdevelopers.form.data.repository.FormRepositoryImpl
+import com.lyecdevelopers.form.data.repository.PatientRepositoryImpl
 import com.lyecdevelopers.form.domain.repository.FormRepository
+import com.lyecdevelopers.form.domain.repository.PatientRepository
 import com.lyecdevelopers.form.domain.usecase.FormsUseCase
+import com.lyecdevelopers.form.domain.usecase.PatientsUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,13 +40,32 @@ object FormModule {
 
     @Provides
     @Singleton
+    fun providePatientsUseCase(repository: PatientRepository): PatientsUseCase {
+        return PatientsUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
     fun provideFormRepository(
         formApi: FormApi,
         formDao: FormDao,
+        visitDao: VisitDao,
+        encounterDao: EncounterDao,
     ): FormRepository {
         return FormRepositoryImpl(
-            formApi = formApi,
-            formDao = formDao,
+            formApi = formApi, formDao = formDao, visitDao = visitDao, encounterDao = encounterDao
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun providePatientRepository(
+        patientDao: PatientDao,
+        vitalsDao: VitalsDao,
+        fhirEngine: FhirEngine,
+    ): PatientRepository {
+        return PatientRepositoryImpl(
+            patientDao = patientDao, vitalsDao = vitalsDao, fhirEngine = fhirEngine
         )
     }
 }

@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.lyecdevelopers.main"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 28
@@ -46,6 +46,11 @@ android {
     hilt {
         enableAggregatingTask = false
     }
+    configurations.all {
+        resolutionStrategy {
+            force("com.google.guava:guava:32.1.3-android")
+        }
+    }
 }
 
 dependencies {
@@ -69,6 +74,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.material.icons.extended)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.constraintlayout)
 
 
     // Hilt
@@ -93,6 +100,11 @@ dependencies {
 
     // logging
     implementation(libs.timber)
+
+    // firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
 
     // Optional: for previewing Composables
     implementation(libs.androidx.ui.tooling.preview)
